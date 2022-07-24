@@ -2,6 +2,7 @@ module Pages.Home_ exposing (Model, Msg, page)
 
 import Dict exposing (Dict)
 import Element exposing (..)
+import Element.Font as Font exposing (..)
 import Gen.Params.Home_ exposing (Params)
 import Page
 import Request
@@ -80,8 +81,15 @@ view : Model -> View Msg
 view model =
     { title = "Monster stock"
     , element =
-        column []
-            [ el [] <|
+        column
+            [ Font.family
+                [ Font.typeface "Roboto"
+                , Font.sansSerif
+                ]
+            , spacing 20
+            , padding 20
+            ]
+            [ el [ Font.size 50, Font.medium ] <|
                 text ((Maybe.withDefault 0 (monsterInStock model) |> String.fromInt) ++ " cans of monster in stock")
             , column
                 []
