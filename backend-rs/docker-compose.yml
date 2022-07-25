@@ -1,0 +1,15 @@
+version: "3"
+
+services:
+  db:
+    image: postgres
+    volumes:
+      - "db_data:/var/lib/postgres/data"
+    environment:
+      - "POSTGRES_USER=monster_stock"
+      - "POSTGRES_PASSWORD=cprc3pxAFVlWH67OkMqVyWvOOrQVF2xS"
+    ports:
+      - 5435:5432
+
+volumes:
+  db_data:
