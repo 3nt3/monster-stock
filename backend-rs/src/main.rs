@@ -26,11 +26,47 @@ async fn get_stock(pool: &State<Pool<Postgres>>) -> Result<Json<Vec<ItemInfo>>, 
         .await;
 
     if let Err(why) = res {
-        eprintln!("error querying stock: {why}");
+        eprintln!("error querying stock: {}", why);
         return Err(Status::InternalServerError);
     }
 
     Ok(Json(res.unwrap()))
+}
+
+#[derive(Debug, Deserialize)]
+struct MimimalItemInfo {
+    product: String,
+    place: String,
+    amount: i32,
+}
+
+#[post("/stock", data = "<data>")]
+async fn update_stock(
+    pool: &State<Pool<Postgres>>,
+    data: Json<MimimalItemInfo>,
+) -> Result<Json<ItemInfo>, Status> {
+    let res = sqlx::query!(
+        "INSERT INTO stock (product, place, amount) VALUES ($1, $2, $3) RETURNING id, created_at",
+        &data.product,
+        &data.place,
+        &data.amount
+    )
+    .fetch_one(&**pool)
+    .await;
+
+    match res {
+        Ok(result) => Ok(Json(ItemInfo {
+            id: result.id,
+            product: data.product.to_owned(),
+            place: data.place.to_owned(),
+            amount: data.amount,
+            created_at: result.created_at,
+        })),
+        Err(why) => {
+            eprintln!("inserting failed: {}", why);
+            return Err(Status::InternalServerError);
+        }
+    }
 }
 
 #[rocket::main]
@@ -47,7 +83,7 @@ async fn main() -> anyhow::Result<()> {
     sqlx::migrate!().run(&pool).await?;
 
     rocket::build()
-        .mount("/", routes![get_stock])
+        .mount("/", routes![get_stock, update_stock])
         .manage(pool)
         .launch()
         .await?;
